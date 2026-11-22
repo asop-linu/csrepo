@@ -1,0 +1,165 @@
+name: Build
+
+concurrency:
+  group: "build"
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '*.md'
+      - '**/*.md'
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v7
+        with:
+          path: "src"
+
+      - name: Checkout builds branch
+        uses: actions/checkout@v7
+        with:
+          ref: "builds"
+          path: "builds"
+          token: ${{ secrets.PAT_TOKEN || github.token }}
+
+      - name: Clean old builds
+        run: |
+          cd "$GITHUB_WORKSPACE/builds"
+          # repo.json adalah metadata statis (bukan hasil generate) dan wajib ada
+          test -f repo.json || { echo "repo.json tidak ditemukan di branch builds"; exit 1; }
+          cp repo.json /tmp/repo.json
+          # Hapus semua kecuali .git
+          find . -maxdepth 1 ! -name '.git' ! -name '.' -exec rm -rf {} +
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools'
+
+      - name: Build Plugins
+        run: |
+          cd "$GITHUB_WORKSPACE/src"
+          chmod +x gradlew
+          ./gradlew make makePluginsJson
+
+          # Salin semua .cs3 hasil build, dari kedalaman direktori mana pun
+          count=$(find . -type f -path '*/build/*.cs3' -exec cp {} "$GITHUB_WORKSPACE/builds/" \; -print | wc -l)
+          test "$count" -gt 0 || { echo "Tidak ada .cs3 yang dihasilkan"; exit 1; }
+          test -f build/plugins.json || { echo "build/plugins.json tidak ditemukan"; exit 1; }
+          cp build/plugins.json "$GITHUB_WORKSPACE/builds/"
+
+          # Pulihkan repo.json, lalu arahkan pluginLists ke manifest repo ini
+          cp /tmp/repo.json "$GITHUB_WORKSPACE/builds/repo.json"
+          python3 - "$GITHUB_WORKSPACE/builds/repo.json" <<'PY'
+          import json, os, sys
+
+          path = sys.argv[1]
+          with open(path) as f:
+              data = json.load(f)
+          data["pluginLists"] = [
+              "https://raw.githubusercontent.com/%s/builds/plugins.json" % os.environ["GITHUB_REPOSITORY"]
+          ]
+          with open(path, "w") as f:
+              json.dump(data, f, indent=2)
+              f.write("\n")
+          PY
+
+      - name: Validate generated artifacts
+        run: |
+          cd "$GITHUB_WORKSPACE/builds"
+          python3 - <<'PY'
+          import json, os, sys
+
+          repo = os.environ["GITHUB_REPOSITORY"].lower()
+          with open("plugins.json") as f:
+              plugins = json.load(f)
+          if not isinstance(plugins, list) or not plugins:
+              sys.exit("plugins.json kosong")
+          for plugin in plugins:
+              url = plugin.get("url", "")
+              if repo not in url.lower():
+                  sys.exit("URL %s tidak mengarah ke repo %s" % (url, repo))
+              name = plugin.get("internalName") or plugin.get("name")
+              if not name or not os.path.isfile(name + ".cs3"):
+                  sys.exit("File %s.cs3 tidak ada" % name)
+          with open("repo.json") as f:
+              repo_data = json.load(f)
+          if repo_data.get("pluginLists") != [
+              "https://raw.githubusercontent.com/%s/builds/plugins.json" % os.environ["GITHUB_REPOSITORY"]
+          ]:
+              sys.exit("repo.json pluginLists tidak mengarah ke repo ini")
+          print("Validated %d plugin entries" % len(plugins))
+          PY
+
+      - name: Push builds
+        run: |
+          cd "$GITHUB_WORKSPACE/builds"
+          git config --local user.email "${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
+          git config --local user.name "${GITHUB_ACTOR}"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Tidak ada perubahan build untuk dipublish"
+          else
+            git commit --amend --reset-author -m "ci: publish CloudStream build $GITHUB_SHA"
+            git push --force-with-lease
+          fi
+
+      - name: Purge jsDelivr cache
+        if: success()
+        run: |
+          sleep 2
+          cd "$GITHUB_WORKSPACE/builds"
+          for file in *.cs3 plugins.json repo.json; do
+            curl -sS "https://purge.jsdelivr.net/gh/${{ github.repository }}@builds/${file}" || true
+          done
+
+      # GitHub hanya menghapus log/artifact otomatis, bukan entri workflow run.
+      # Step ini menyimpan beberapa run terakhir saja agar tab Actions tidak numpuk.
+      - name: Bersihkan workflow run lama
+        if: always()
+        continue-on-error: true
+        uses: actions/github-script@v8
+        env:
+          KEEP_RUNS: 4
+        with:
+          github-token: ${{ secrets.PAT_TOKEN || github.token }}
+          script: |
+            const keep = Number(process.env.KEEP_RUNS || 4)
+            const currentRunId = context.runId
+            const runs = await github.paginate(github.rest.actions.listWorkflowRunsForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: '.github/workflows/build.yml',
+              status: 'completed',
+              per_page: 100
+            })
+            const oldRuns = runs
+              .filter(run => run.id !== currentRunId)
+              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+              .slice(keep)
+            for (const run of oldRuns) {
+              core.info(`Menghapus workflow run #${run.run_number} (${run.id})`)
+              await github.rest.actions.deleteWorkflowRun({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: run.id
+              })
+            }
+            core.info(`Selesai: ${oldRuns.length} run lama dihapus, ${keep} run terakhir disimpan.`)
