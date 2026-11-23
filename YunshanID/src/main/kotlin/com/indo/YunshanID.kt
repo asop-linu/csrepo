@@ -4,8 +4,13 @@ import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.ExtractorLinkType
 import com.lagradost.cloudstream3.utils.M3u8Helper
+import com.lagradost.cloudstream3.utils.Qualities
+import com.lagradost.cloudstream3.utils.getAndUnpack
+import com.lagradost.cloudstream3.utils.getPacked
 import com.lagradost.cloudstream3.utils.loadExtractor
 import com.lagradost.cloudstream3.utils.newExtractorLink
+import com.lagradost.nicehttp.JsonAsString
+import org.json.JSONObject
 
 class YunshanID : MainAPI() {
     override var mainUrl = "https://yunshanid.site"
@@ -162,6 +167,61 @@ class YunshanID : MainAPI() {
         } catch (_: Exception) { }
     }
 
+    private suspend fun extractAbyss(embedUrl: String, pageUrl: String, callback: (ExtractorLink) -> Unit): Boolean {
+        val html = app.get(embedUrl, headers = headers).text
+        val enc = Regex("""datas\s*=\s*"([^"]+)"""").find(html)?.groupValues?.getOrNull(1) ?: return false
+        val response = app.post(
+            "https://enc-dec.app/api/dec-abyss",
+            headers = mapOf(
+                "User-Agent" to headers.getValue("User-Agent"),
+                "Content-Type" to "application/json",
+                "Origin" to "https://abyssplayer.com",
+                "Referer" to "https://abyssplayer.com/"
+            ),
+            json = JsonAsString(JSONObject().put("text", enc).toString())
+        ).text
+        val sources = JSONObject(response).optJSONObject("result")?.optJSONArray("sources") ?: return false
+        var found = false
+        for (i in 0 until sources.length()) {
+            val item = sources.optJSONObject(i) ?: continue
+            val url = item.optString("url")
+            if (!url.startsWith("http")) continue
+            val type = item.optString("type")
+            val quality = when {
+                type.contains("1080") -> Qualities.P1080.value
+                type.contains("720") -> Qualities.P720.value
+                type.contains("480") -> Qualities.P480.value
+                else -> Qualities.Unknown.value
+            }
+            callback(newExtractorLink("Abyss", "Abyss $type", url, type = ExtractorLinkType.VIDEO) {
+                this.quality = quality
+                this.referer = "https://abyssplayer.com/"
+                this.headers = mapOf("Referer" to "https://abyssplayer.com/")
+            })
+            found = true
+        }
+        return found
+    }
+
+    private suspend fun extractStreamRuby(embedUrl: String, callback: (ExtractorLink) -> Unit): Boolean {
+        val base = Regex("""https?://[^/]+""").find(embedUrl)?.value ?: "https://rubyvidhub.com"
+        val html = app.get(embedUrl, headers = headers).text
+        var script = if (!getPacked(html).isNullOrEmpty()) getAndUnpack(html)
+            else app.get(embedUrl, headers = headers).document.selectFirst("script:containsData(sources:)")?.data()
+        if (script == null) {
+            val id = Regex("""embed-([a-zA-Z0-9]+)\.html""").find(embedUrl)?.groupValues?.getOrNull(1)
+            if (id != null) {
+                val dl = app.post("$base/dl", headers = headers, data = mapOf(
+                    "op" to "embed", "file_code" to id, "auto" to "1", "referer" to ""
+                )).text
+                script = if (!getPacked(dl).isNullOrEmpty()) getAndUnpack(dl) else dl
+            }
+        }
+        val m3u8 = Regex("""file:\s*"(.*?m3u8.*?)"""").find(script ?: return false)?.groupValues?.getOrNull(1) ?: return false
+        M3u8Helper.generateM3u8("StreamRuby", m3u8, "$base/").forEach(callback)
+        return true
+    }
+
     override suspend fun loadLinks(
         data: String,
         isCasting: Boolean,
@@ -170,20 +230,26 @@ class YunshanID : MainAPI() {
     ): Boolean {
         val html = app.get(data, headers = headers).text
         val props = islandProps(html, "WatchClient") ?: return false
-        val serverRegex = Regex(
-            "\\{\"id\":\\[0,\\d+\\],\"episode_id\":\\[0,\\d+\\],\"name\":\\[0,\"((?:\\\\.|[^\"])*)\"],\"embed_url\":\\[0,\"((?:\\\\.|[^\"])*)\"\\]}"
-        )
+        val embedRegex = Regex(""""embed_url":\[0,"((?:\\.|[^"])*)"""")
         var found = false
-        serverRegex.findAll(props).forEach { match ->
-            val embed = fixUrl(unescape(match.groupValues[2]))
-            val dmId = Regex("""(?:dailymotion\.com/(?:video/|player/[^?]+\.html\?video=)|dai\.ly/|geo\.dailymotion\.com/player/[^?]+\.html\?video=)([a-zA-Z0-9]+)""")
-                .find(embed)?.groupValues?.getOrNull(1)
-            if (dmId != null) {
-                extractDailymotion(dmId, callback)
-                found = true
-            } else if (loadExtractor(embed, data, subtitleCallback, callback)) {
-                found = true
-            }
+        embedRegex.findAll(props).forEach { match ->
+            val embed = fixUrl(unescape(match.groupValues[1]))
+            try {
+                val handled = when {
+                    embed.contains("abyssplayer") || embed.contains("abysscdn") -> extractAbyss(embed, data, callback)
+                    embed.contains("rubyvidhub") || embed.contains("streamruby") -> extractStreamRuby(embed, callback)
+                    else -> {
+                        val dmId = Regex("""(?:dailymotion\.com/(?:video/|player/[^?]+\.html\?video=)|dai\.ly/|geo\.dailymotion\.com/player/[^?]+\.html\?video=)([a-zA-Z0-9]+)""")
+                            .find(embed)?.groupValues?.getOrNull(1)
+                        if (dmId != null) {
+                            extractDailymotion(dmId, callback); true
+                        } else {
+                            loadExtractor(embed, data, subtitleCallback, callback)
+                        }
+                    }
+                }
+                if (handled) found = true
+            } catch (_: Exception) { }
         }
         return found
     }
