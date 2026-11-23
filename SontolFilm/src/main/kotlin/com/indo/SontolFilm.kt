@@ -3,6 +3,7 @@ package com.indo
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.ExtractorLinkType
+import com.lagradost.cloudstream3.utils.getAndUnpack
 import com.lagradost.cloudstream3.utils.loadExtractor
 import com.lagradost.cloudstream3.utils.newExtractorLink
 import org.jsoup.nodes.Element
@@ -119,7 +120,7 @@ open class SontolFilmBase : MainAPI() {
     ): Boolean {
         val html = app.get(embedUrl, headers = headers).text
         if (html.contains("embed restricted", ignoreCase = true)) return false
-        val unpacked = unpackPackedJs(html) ?: return false
+        val unpacked = unpackPackedJs(html) ?: getAndUnpack(html)
 
         Regex("""\{file:"([^"]+\.vtt)",label:"([^"]+)",kind:"captions"\}""")
             .findAll(unpacked).forEach { match ->
