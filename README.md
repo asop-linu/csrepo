@@ -62,7 +62,7 @@
 |---|---|---|
 | BlurayUFR | [blurayufr.site](https://blurayufr.site) | ✅ Stable |
 | GfyMultimedx | [gfymultimedx.online](https://gfymultimedx.online) | ⚠️ Butuh login + Turnstile |
-| Idlix | [z3.idlixku.com](https://z3.idlixku.com) | ⚠️ Butuh verifikasi Turnstile |
+| Idlix | [z3.idlixku.com](https://z3.idlixku.com) | 🧪 Development |
 | Indomax21 | [idmxl.ink](https://idmxl.ink) | ✅ Stable |
 | KlikXXI | [klikxxi.shop](https://klikxxi.shop) | ✅ Stable |
 | LayarAsia | [server-1.layar.asia](https://server-1.layar.asia) | ✅ Stable |
