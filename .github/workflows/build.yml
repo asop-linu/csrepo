@@ -20,7 +20,7 @@ permissions:
 # Plugin yang belum stabil tidak dibangun dan tidak dipublikasikan ke branch
 # "builds". Sumbernya tetap ada di repo; hapus dari daftar ini setelah stabil.
 env:
-  UNSTABLE_MODULES: "Nomat Pahe GfyMultimedx"
+  UNSTABLE_MODULES: "Nomat GfyMultimedx"
 
 jobs:
   build:
