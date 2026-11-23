@@ -61,16 +61,16 @@
 | Plugin | Situs | Status |
 |---|---|---|
 | BlurayUFR | [blurayufr.site](https://blurayufr.site) | ✅ Stable |
-| GfyMultimedx | [gfymultimedx.online](https://gfymultimedx.online) | ⚠️ Butuh verifikasi Turnstile |
-| Idlix | [z3.idlixku.com](https://z3.idlixku.com) | ✅ Stable |
+| GfyMultimedx | [gfymultimedx.online](https://gfymultimedx.online) | ⚠️ Butuh login + Turnstile |
+| Idlix | [z3.idlixku.com](https://z3.idlixku.com) | ⚠️ Butuh verifikasi Turnstile |
 | Indomax21 | [idmxl.ink](https://idmxl.ink) | ✅ Stable |
 | KlikXXI | [klikxxi.shop](https://klikxxi.shop) | ✅ Stable |
 | LayarAsia | [server-1.layar.asia](https://server-1.layar.asia) | ✅ Stable |
 | LK21 | [lk21.de](https://lk21.de) | ✅ Stable |
 | MovieBox | [themoviebox.org](https://themoviebox.org) | ✅ Stable |
 | NGEFILM21 | [new39.ngefilm.site](https://new39.ngefilm.site) | ✅ Stable |
-| Nomat | [nomat.world](https://nomat.world) | ✅ Stable |
-| Pahe | [pahe.ink](https://pahe.ink) | ✅ Stable |
+| Nomat | [nomat.world](https://nomat.world) | ⚠️ Butuh captcha |
+| Pahe | [pahe.ink](https://pahe.ink) | ⚠️ Butuh captcha |
 | PusatFilm | [new1.pusatfilm21info.com](https://new1.pusatfilm21info.com) | ✅ Stable |
 | Rebahin | [rebahin.cam](https://rebahin.cam) | ✅ Stable |
 | Sarangfilm | [sarangfilm.co](https://sarangfilm.co) | ✅ Stable |
