@@ -17,6 +17,11 @@ permissions:
   contents: write
   actions: write
 
+# Plugin yang belum stabil tidak dibangun dan tidak dipublikasikan ke branch
+# "builds". Sumbernya tetap ada di repo; hapus dari daftar ini setelah stabil.
+env:
+  UNSTABLE_MODULES: "Nomat Pahe GfyMultimedx"
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -57,7 +62,11 @@ jobs:
         run: |
           cd "$GITHUB_WORKSPACE/src"
           chmod +x gradlew
-          ./gradlew make makePluginsJson
+          EXCLUDES=""
+          for m in $UNSTABLE_MODULES; do
+            EXCLUDES="$EXCLUDES -x :$m:make -x :$m:writeCacheEntry"
+          done
+          ./gradlew make makePluginsJson $EXCLUDES
 
           # Salin semua .cs3 hasil build, dari kedalaman direktori mana pun
           count=$(find . -type f -path '*/build/*.cs3' -exec cp {} "$GITHUB_WORKSPACE/builds/" \; -print | wc -l)
