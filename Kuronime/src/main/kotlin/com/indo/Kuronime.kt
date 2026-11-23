@@ -1,12 +1,22 @@
 package com.indo
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.LoadResponse.Companion.addAniListId
 import com.lagradost.cloudstream3.LoadResponse.Companion.addMalId
+import com.lagradost.cloudstream3.extractors.helper.AesHelper
+import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
+import com.lagradost.cloudstream3.utils.M3u8Helper
 import com.lagradost.cloudstream3.utils.Qualities
+import com.lagradost.cloudstream3.utils.getQualityFromName
 import com.lagradost.cloudstream3.utils.loadExtractor
 import com.lagradost.cloudstream3.utils.newExtractorLink
+import com.lagradost.nicehttp.RequestBodyTypes
+import kotlinx.coroutines.runBlocking
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.net.URI
 import java.util.regex.PatternSyntaxException
 
 class Kuronime : MainAPI() {
@@ -16,6 +26,12 @@ class Kuronime : MainAPI() {
     override var lang = "id"
     override val hasDownloadSupport = true
     override val supportedTypes = setOf(TvType.Anime, TvType.AnimeMovie, TvType.OVA)
+
+    private var animekuUrl = "https://animeku.org"
+
+    companion object {
+        const val KEY = "3&!Z0M,VIZ;dZW=="
+    }
 
     // Homepage with paginated new episodes
     override val mainPage = mainPageOf(
@@ -149,50 +165,102 @@ class Kuronime : MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        val document = app.get(data).document
+        val req = app.get(data)
+        val document = req.document
+        val currentBaseUrl = getBaseUrl(req.url)
 
-        val ogVideo = document.selectFirst("meta[property='og:video:url']")?.attr("content")
-            ?.ifBlank { null }
-        val iframe = document.selectFirst("iframe#iframedc")?.attr("data-src")
-            ?.ifBlank { null }
-        val playerIframe = document.select("iframe[src]").firstOrNull()?.attr("src")?.ifBlank { null }
+        // Situs memuat player lewat API animeku; id episode disimpan di variabel script ini.
+        val scriptData = document.select("script").map { it.data() }
+            .firstOrNull { it.contains("_0xa100d42aa") }
+            ?: return false
 
-        val embedUrls = listOfNotNull(ogVideo, iframe, playerIframe).distinct()
+        val id = scriptData.substringAfter("_0xa100d42aa = \"").substringBefore("\";")
+        if (id.isBlank()) return false
 
-        for (url in embedUrls) {
-            val fullUrl = if (url.startsWith("//")) "https:$url" else url
-            loadExtractor(fullUrl, data, subtitleCallback, callback)
-        }
+        val servers = app.post(
+            "$animekuUrl/api/v9/sources",
+            requestBody = """{"id":"$id"}""".toRequestBody(RequestBodyTypes.JSON.toMediaTypeOrNull()),
+            referer = "$currentBaseUrl/"
+        ).parsedSafe<Servers>() ?: return false
 
-        // Download links
-        document.select("a[href]").forEach { a ->
-            val href = a.attr("href").ifBlank { null } ?: return@forEach
-            when {
-                href.contains("krakenfiles.com") -> {
-                    try {
-                        val kfDoc = app.get(href).document
-                        val videoUrl = kfDoc.selectFirst("source[src*=krakencloud], source[type=video/mp4]")
-                            ?.attr("src")?.ifBlank { null }
-                        if (videoUrl != null) {
-                            callback(newExtractorLink("KrakenFiles", "Download", videoUrl) {
-                                this.quality = Qualities.Unknown.value
-                                this.referer = href
-                            })
-                        }
-                    } catch (_: Exception) { }
+        var found = false
+
+        // Sumber utama: HLS terenkripsi AES-CBC (passphrase KEY).
+        try {
+            val srcEnc = servers.src
+            if (!srcEnc.isNullOrBlank()) {
+                val decrypt = AesHelper.cryptoAESHandler(
+                    base64Decode(srcEnc), KEY.toByteArray(), false, "AES/CBC/NoPadding"
+                )
+                val source = tryParseJson<Sources>(decrypt?.toJsonFormat())?.src?.replace("\\", "")
+                if (!source.isNullOrBlank()) {
+                    M3u8Helper.generateM3u8(
+                        this.name, source, "$animekuUrl/", headers = mapOf("Origin" to animekuUrl)
+                    ).forEach { callback(it); found = true }
                 }
-                href.contains("pixeldrain.com") -> {
-                    val pdId = Regex("pixeldrain\\.com/u/(\\w+)").find(href)?.groupValues?.getOrNull(1)
-                    if (pdId != null) {
-                        callback(newExtractorLink("PixelDrain", "Download", "https://pixeldrain.com/api/file/$pdId") {
-                            this.quality = Qualities.Unknown.value
-                            this.referer = href
-                        })
+            }
+        } catch (_: Exception) { }
+
+        // Mirror: daftar embed per kualitas (doodstream, mp4upload, dll).
+        try {
+            val mirrorEnc = servers.mirror
+            if (!mirrorEnc.isNullOrBlank()) {
+                val decrypt = AesHelper.cryptoAESHandler(
+                    base64Decode(mirrorEnc), KEY.toByteArray(), false, "AES/CBC/NoPadding"
+                )
+                tryParseJson<Mirrors>(decrypt)?.embed?.forEach { (quality, entries) ->
+                    entries.forEach { (_, embed) ->
+                        loadFixedExtractor(embed, quality.removePrefix("v"), "$currentBaseUrl/", subtitleCallback, callback)
+                        found = true
                     }
                 }
             }
-        }
+        } catch (_: Exception) { }
 
-        return true
+        return found
     }
+
+    private suspend fun loadFixedExtractor(
+        url: String?,
+        quality: String?,
+        referer: String?,
+        subtitleCallback: (SubtitleFile) -> Unit,
+        callback: (ExtractorLink) -> Unit
+    ) {
+        loadExtractor(url ?: return, referer, subtitleCallback) { link ->
+            runBlocking {
+                callback.invoke(
+                    newExtractorLink(link.name, link.name, link.url, link.type) {
+                        this.referer = link.referer
+                        this.headers = link.headers
+                        this.extractorData = link.extractorData
+                        this.quality = getQualityFromName(quality)
+                    }
+                )
+            }
+        }
+    }
+
+    private fun String.toJsonFormat(): String {
+        return if (this.startsWith("\"")) {
+            this.substringAfter("\"").substringBeforeLast("\"").replace("\\\"", "\"")
+        } else this
+    }
+
+    private fun getBaseUrl(url: String): String {
+        return URI(url).let { "${it.scheme}://${it.host}" }
+    }
+
+    data class Servers(
+        @JsonProperty("src") val src: String? = null,
+        @JsonProperty("mirror") val mirror: String? = null,
+    )
+
+    data class Sources(
+        @JsonProperty("src") var src: String? = null,
+    )
+
+    data class Mirrors(
+        @JsonProperty("embed") val embed: Map<String, Map<String, String>> = emptyMap(),
+    )
 }
