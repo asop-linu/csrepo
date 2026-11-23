@@ -60,6 +60,7 @@
 
 | Plugin | Situs | Status |
 |---|---|---|
+| ArrowTV | [arrowtv.net](https://arrowtv.net) | ✅ Stable |
 | BlurayUFR | [blurayufr.site](https://blurayufr.site) | ✅ Stable |
 | GfyMultimedx | [gfymultimedx.online](https://gfymultimedx.online) | ⚠️ Butuh login + Turnstile |
 | Idlix | [z3.idlixku.com](https://z3.idlixku.com) | 🧪 Development |
@@ -70,7 +71,6 @@
 | MovieBox | [themoviebox.org](https://themoviebox.org) | ✅ Stable |
 | NGEFILM21 | [new39.ngefilm.site](https://new39.ngefilm.site) | ✅ Stable |
 | Nomat | [nomat.world](https://nomat.world) | ⚠️ Butuh captcha |
-| Pahe | [pahe.ink](https://pahe.ink) | ⚠️ Butuh captcha |
 | PusatFilm | [new1.pusatfilm21info.com](https://new1.pusatfilm21info.com) | ✅ Stable |
 | Rebahin | [rebahin.cam](https://rebahin.cam) | ✅ Stable |
 | Sarangfilm | [sarangfilm.co](https://sarangfilm.co) | ✅ Stable |
