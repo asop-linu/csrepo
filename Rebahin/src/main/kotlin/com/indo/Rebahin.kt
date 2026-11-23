@@ -3,8 +3,11 @@ package com.indo
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.ExtractorLinkType
+import com.lagradost.cloudstream3.utils.Qualities
 import com.lagradost.cloudstream3.utils.loadExtractor
 import com.lagradost.cloudstream3.utils.newExtractorLink
+import com.lagradost.nicehttp.JsonAsString
+import org.json.JSONObject
 import org.jsoup.nodes.Element
 
 /**
@@ -15,7 +18,7 @@ import org.jsoup.nodes.Element
  *  - Kartu film: <article class="kartu"> a.judul (judul+href), .poster img (TMDB poster),
  *    .nilai (skor "5,7" koma desimal), .kartu-kaki (tahun · negara)
  *  - Daftar: /film/ (paginasi /film/2/), /bioskop/ (paginasi /bioskop/2/)
- *  - Detail: /film/<tmdb>-<slug>/ ; Nonton: /nonton/<tmdb>-<slug>/ (iframe plyr.freeon.site)
+ *  - Detail: /film/<tmdb>-<slug>/ ; Nonton: /nonton/<tmdb>-<slug>/ (iframe player.abyssplayer.com)
  */
 class Rebahin : MainAPI() {
     override var mainUrl = "https://rebahin.cam"
@@ -91,6 +94,41 @@ class Rebahin : MainAPI() {
         }
     }
 
+    private suspend fun extractAbyss(embedUrl: String, callback: (ExtractorLink) -> Unit): Boolean {
+        val html = app.get(embedUrl, referer = "$mainUrl/").text
+        val enc = Regex("""datas\s*=\s*"([^"]+)"""").find(html)?.groupValues?.getOrNull(1) ?: return false
+        val response = app.post(
+            "https://enc-dec.app/api/dec-abyss",
+            headers = mapOf(
+                "Content-Type" to "application/json",
+                "Origin" to "https://abyssplayer.com",
+                "Referer" to "https://abyssplayer.com/"
+            ),
+            json = JsonAsString(JSONObject().put("text", enc).toString())
+        ).text
+        val sources = JSONObject(response).optJSONObject("result")?.optJSONArray("sources") ?: return false
+        var found = false
+        for (i in 0 until sources.length()) {
+            val item = sources.optJSONObject(i) ?: continue
+            val url = item.optString("url")
+            if (!url.startsWith("http")) continue
+            val type = item.optString("type")
+            val quality = when {
+                type.contains("1080") -> Qualities.P1080.value
+                type.contains("720") -> Qualities.P720.value
+                type.contains("480") -> Qualities.P480.value
+                else -> Qualities.Unknown.value
+            }
+            callback(newExtractorLink("Abyss", "Abyss $type", url, type = ExtractorLinkType.VIDEO) {
+                this.quality = quality
+                this.referer = "https://abyssplayer.com/"
+                this.headers = mapOf("Referer" to "https://abyssplayer.com/")
+            })
+            found = true
+        }
+        return found
+    }
+
     override suspend fun loadLinks(
         data: String,
         isCasting: Boolean,
@@ -103,20 +141,13 @@ class Rebahin : MainAPI() {
         for (iframe in iframes) {
             val src = iframe.attr("src").trim()
             if (src.isBlank() || !src.startsWith("http")) continue
-            val handled = loadExtractor(src, mainUrl, subtitleCallback, callback)
-            if (!handled) {
-                callback(
-                    newExtractorLink(
-                        name,
-                        name,
-                        src,
-                        type = ExtractorLinkType.M3U8
-                    ) {
-                        this.referer = "$mainUrl/"
-                    }
-                )
-            }
-            found = true
+            try {
+                val handled = when {
+                    src.contains("abyssplayer") || src.contains("abysscdn") -> extractAbyss(src, callback)
+                    else -> loadExtractor(src, mainUrl, subtitleCallback, callback)
+                }
+                if (handled) found = true
+            } catch (_: Exception) { }
         }
         return found
     }
