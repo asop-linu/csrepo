@@ -75,8 +75,6 @@
 | Rebahin | [rebahin.cam](https://rebahin.cam) | ✅ Stable |
 | Sarangfilm | [sarangfilm.co](https://sarangfilm.co) | ✅ Stable |
 | Sflix | [sflix.film](https://sflix.film) | ✅ Stable |
-| SontolFilm | [sontolfilm.com](https://sontolfilm.com) | ✅ Stable |
-| SontolFilmDubIndo | [sontolfilm.com/quality/dubbing/](https://sontolfilm.com/quality/dubbing/) | ✅ Stable |
 | WGFilm21 | [rotator.wgfilm21.net](https://rotator.wgfilm21.net) | ✅ Stable |
 
 ---
