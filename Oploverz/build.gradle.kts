@@ -5,5 +5,5 @@ cloudstream {
     authors = listOf("asop-linu")
     status = 1
     tvTypes = listOf("AnimeMovie", "OVA", "Anime")
-    iconUrl = "https://www.google.com/s2/favicons?domain=https://oploverz.ch&sz=%size%"
+    iconUrl = "https://www.google.com/s2/favicons?domain=https://oploverz.mov&sz=%size%"
 }

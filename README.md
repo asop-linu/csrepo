@@ -51,7 +51,7 @@
 | Kuramanime | [v20.kuramanime.ing](https://v20.kuramanime.ing) | ✅ Stable |
 | Kuronime | [kuronime.sbs](https://kuronime.sbs) | ✅ Stable |
 | Nimegami | [nimegami.id](https://nimegami.id) | ✅ Stable |
-| Oploverz | [oploverz.ch](https://oploverz.ch) | ✅ Stable |
+| Oploverz | [oploverz.mov](https://oploverz.mov) | ✅ Stable |
 | Otakudesu | [otakudesu.blog](https://otakudesu.blog) | ✅ Stable |
 | Sokuja | [x6.sokuja.uk](https://x6.sokuja.uk) | ✅ Stable |
 | YunshanID | [yunshanid.site](https://yunshanid.site) | ✅ Stable |
