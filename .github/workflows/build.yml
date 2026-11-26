@@ -72,7 +72,50 @@ jobs:
           count=$(find . -type f -path '*/build/*.cs3' -exec cp {} "$GITHUB_WORKSPACE/builds/" \; -print | wc -l)
           test "$count" -gt 0 || { echo "Tidak ada .cs3 yang dihasilkan"; exit 1; }
           test -f build/plugins.json || { echo "build/plugins.json tidak ditemukan"; exit 1; }
-          cp build/plugins.json "$GITHUB_WORKSPACE/builds/"
+
+          # Pastikan hash dan ukuran di manifest benar-benar cocok dengan .cs3
+          # yang akan dipublikasikan, sebelum Cache CloudStream menyimpan manifest.
+          python3 - "$GITHUB_WORKSPACE" <<'PY'
+          import hashlib, json, os, sys
+
+          root = sys.argv[1]
+          builds = os.path.join(root, "builds")
+          with open(os.path.join(root, "src", "build", "plugins.json")) as f:
+              plugins = json.load(f)
+          for plugin in plugins:
+              name = plugin.get("internalName") or plugin.get("name")
+              path = os.path.join(builds, name + ".cs3")
+              if not os.path.isfile(path):
+                  sys.exit("File %s.cs3 tidak ada" % name)
+              data = open(path, "rb").read()
+              expected_size = plugin.get("fileSize")
+              if expected_size is not None and expected_size != len(data):
+                  sys.exit("Ukuran %s.cs3: manifest %s, aktual %s" % (name, expected_size, len(data)))
+              expected_hash = plugin.get("fileHash")
+              if expected_hash:
+                  actual_hash = "sha256-" + hashlib.sha256(data).hexdigest()
+                  if expected_hash != actual_hash:
+                      sys.exit("Hash %s.cs3: manifest %s, aktual %s" % (name, expected_hash, actual_hash))
+          print("Validated hash and size for %d artifacts" % len(plugins))
+          PY
+
+          # CloudStream meng-cache plugins.json selama 5-15 menit. Setiap CI
+          # menghasilkan .cs3 baru (hash berubah walaupun kode sumber sama),
+          # sehingga fileHash lama di cache bentrok dengan file baru dan
+          # memicu "Mismatched digest". Manifest publikasi sengaja tanpa
+          # fileHash; ukuran file masih diverifikasi di atas.
+          python3 - "$GITHUB_WORKSPACE/src/build/plugins.json" "$GITHUB_WORKSPACE/builds/plugins.json" <<'PY'
+          import json, sys
+
+          src, dst = sys.argv[1:]
+          with open(src) as f:
+              plugins = json.load(f)
+          for plugin in plugins:
+              plugin.pop("fileHash", None)
+          with open(dst, "w") as f:
+              json.dump(plugins, f, indent=2)
+              f.write("\n")
+          PY
 
           # Pulihkan repo.json, lalu arahkan pluginLists ke manifest repo ini
           cp /tmp/repo.json "$GITHUB_WORKSPACE/builds/repo.json"
@@ -126,8 +169,8 @@ jobs:
           if git diff --cached --quiet; then
             echo "Tidak ada perubahan build untuk dipublish"
           else
-            git commit --amend --reset-author -m "ci: publish CloudStream build $GITHUB_SHA"
-            git push --force-with-lease
+            git commit -m "ci: publish CloudStream build $GITHUB_SHA"
+            git push origin HEAD:builds
           fi
 
       - name: Purge jsDelivr cache
