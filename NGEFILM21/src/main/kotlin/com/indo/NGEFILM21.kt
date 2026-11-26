@@ -3,6 +3,7 @@ package com.indo
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.utils.ExtractorLinkType
+import com.lagradost.cloudstream3.utils.M3u8Helper
 import com.lagradost.cloudstream3.utils.Qualities
 import com.lagradost.cloudstream3.utils.loadExtractor
 import com.lagradost.cloudstream3.utils.newExtractorLink
@@ -185,7 +186,8 @@ open class MuviproBase : MainAPI() {
         } else embedUrl
         val html = if (target == embedUrl) first else app.get(target, headers = headers(embedUrl)).text
         val unpacked = unpackPackedJs(html) ?: return false
-        val raw = listOf("hls4", "hls3", "hls2").firstNotNullOfOrNull { key ->
+        // hls4 di host ini adalah playlist iklan (segmen image/png), bukan video.
+        val raw = listOf("hls2", "hls3").firstNotNullOfOrNull { key ->
             Regex("""["']$key["']\s*:\s*["']([^"']+)["']""").find(unpacked)?.groupValues?.getOrNull(1)
         } ?: return false
         val hls = if (raw.startsWith("http")) raw else {
@@ -196,6 +198,37 @@ open class MuviproBase : MainAPI() {
             this.headers = mapOf("Referer" to target)
             this.type = ExtractorLinkType.M3U8
         })
+        return true
+    }
+
+    /** morencius.com memakai script P.A.C.K.E.R. dengan HLS asli di hls2. */
+    private suspend fun extractMorencius(
+        embedUrl: String,
+        callback: (ExtractorLink) -> Unit
+    ): Boolean {
+        val html = app.get(embedUrl, headers = headers(embedUrl)).text
+        val unpacked = unpackPackedJs(html) ?: return false
+        val raw = listOf("hls2", "hls3").firstNotNullOfOrNull { key ->
+            Regex("""["']$key["']\s*:\s*["']([^"']+)["']""").find(unpacked)?.groupValues?.getOrNull(1)
+        } ?: return false
+        val hls = if (raw.startsWith("http")) raw else {
+            "https://" + embedUrl.substringAfter("://").substringBefore("/") + raw
+        }
+        val links = M3u8Helper.generateM3u8(
+            source = "Morencius",
+            streamUrl = hls,
+            referer = embedUrl,
+            headers = mapOf("Referer" to embedUrl, "User-Agent" to userAgent)
+        )
+        if (links.isEmpty()) {
+            callback(newExtractorLink("Morencius", "Morencius HLS", hls) {
+                this.referer = embedUrl
+                this.headers = mapOf("Referer" to embedUrl, "User-Agent" to userAgent)
+                this.type = ExtractorLinkType.M3U8
+            })
+        } else {
+            links.forEach(callback)
+        }
         return true
     }
 
@@ -271,11 +304,24 @@ open class MuviproBase : MainAPI() {
                 .forEach { match -> fixUrlNull(match.groupValues[1])?.let { embeds.add(it) } }
         }
 
-        doc.select("iframe[src]").forEach { iframe ->
-            val src = iframe.attr("src")
-            if (src.startsWith("http") && !src.contains("googletagmanager") && !src.contains("facebook")) {
-                embeds.add(src)
+        fun collectIframes(page: Element) {
+            page.select("iframe[src], iframe[data-src]").forEach { iframe ->
+                val src = iframe.attr("src").ifBlank { iframe.attr("data-src") }
+                val url = fixUrlNull(src.ifBlank { null }) ?: return@forEach
+                if (!url.contains("googletagmanager") && !url.contains("facebook")) embeds.add(url)
             }
+        }
+
+        collectIframes(doc)
+        // Server 2–4 hanya bisa diakses lewat tab ?player=N; halaman utama
+        // pernah memakai AJAX muvipro_player_content, tapi situs sekarang tidak.
+        val tabUrls = doc.select(".muvipro-player-tabs a[href*='player=']")
+            .mapNotNull { a -> fixUrlNull(a.attr("href").ifBlank { null }) }
+            .distinct()
+        for (tabUrl in tabUrls) {
+            try {
+                collectIframes(app.get(tabUrl, headers = headers(tabUrl)).document)
+            } catch (_: Exception) { }
         }
 
         var found = false
@@ -284,10 +330,19 @@ open class MuviproBase : MainAPI() {
                 when {
                     embed.contains("abyssplayer") || embed.contains("playhydrax") ||
                         embed.contains("abysscdn") -> extractAbyss(embed, data, callback)
+
                     embed.contains("hgcloud") || embed.contains("audinifer") ||
                         embed.contains("streamhg") -> extractStreamHg(embed, data, callback)
+
+                    embed.contains("morencius") -> extractMorencius(embed, callback)
+
                     embed.contains("embedorigin") || embed.contains("streamorigin") ->
                         extractStreamOrigin(embed, data, subtitleCallback, callback)
+
+                    // rpmlive maintenance; gdplayer butuh challenge JS yang tidak
+                    // bisa diselesaikan plugin. Lewati keduanya.
+                    embed.contains("rpmlive") || embed.contains("gdplayer") -> false
+
                     else -> loadExtractor(embed, data, subtitleCallback, callback)
                 }
             } catch (_: Exception) {
