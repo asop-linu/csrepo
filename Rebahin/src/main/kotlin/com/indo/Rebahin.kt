@@ -19,13 +19,15 @@ import org.jsoup.nodes.Element
  * Struktur situs:
  *  - Kartu film: <article class="kartu"> a.judul (judul+href), .poster img (TMDB poster),
  *    .nilai (skor "5,7" koma desimal), .kartu-kaki (tahun · negara)
- *  - Daftar: /terbaru/, /bioskop/, /populer/, /rating-tertinggi/ (tanpa paginasi)
+ *  - Beranda: blok section.blok dengan judul h1/h2.judul-blok; kartu biasa article.kartu,
+ *    kartu "Trending Now" memakai a.tren-kartu bergperingkat.
  *  - Detail: /film/<tmdb>-<slug>/ ; Nonton: /nonton/<tmdb>-<slug>/ (iframe player abyss/freeon)
  *
  * Catatan penting: situs ini hanya menyediakan pemutar untuk sebagian judul (rilis baru).
  * Daftar judul yang punya pemutar ada di sitemap /sitemap-nonton.xml, jadi judul tanpa
  * pemutar disembunyikan dari daftar maupun pencarian supaya tidak berakhir "0 link".
- * Blok daftar di beranda: /terbaru/, /bioskop/, /populer/, /rating-tertinggi/.
+ * Beranda tidak punya paginasi; blok kategori (/terbaru/, /bioskop/, dst.) tidak dipakai
+ * karena isinya berbeda dari yang ditampilkan di halaman depan.
  */
 class Rebahin : MainAPI() {
     override var mainUrl = "https://rebahin.cam"
@@ -35,12 +37,12 @@ class Rebahin : MainAPI() {
     override val hasDownloadSupport = true
     override val supportedTypes = setOf(TvType.Movie)
 
-    // Mengikuti blok daftar di halaman depan rebahin.cam.
+    // Label persis seperti blok beranda rebahin.cam; marker hanya pembeda request.
     override val mainPage = mainPageOf(
-        "$mainUrl/terbaru/" to "Terbaru",
-        "$mainUrl/bioskop/" to "Sedang Tayang di Bioskop",
-        "$mainUrl/populer/" to "Trending Now",
-        "$mainUrl/rating-tertinggi/" to "Rating Tertinggi",
+        "$mainUrl/?bagian=film-terbaru" to "Film Terbaru",
+        "$mainUrl/?bagian=bioskop" to "Sedang Tayang di Bioskop",
+        "$mainUrl/?bagian=trending" to "Trending Now",
+        "$mainUrl/?bagian=rating" to "Rating Tertinggi",
     )
 
     private var playableSlugs: Set<String> = emptySet()
@@ -100,12 +102,33 @@ class Rebahin : MainAPI() {
         }
     }
 
-    override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
-        // Daftar di beranda tidak punya paginasi: halaman 2+ mengulang isi yang sama.
-        if (page > 1) return newHomePageResponse(request.name, listOf<SearchResponse>())
+    private fun parseTrendingCard(card: Element): SearchResponse? {
+        val href = card.attr("href").trim()
+        val title = card.selectFirst("span.sembunyi")?.text()?.trim()
+            ?.replace(Regex("""^Peringkat\s+\d+\s*:\s*""", RegexOption.IGNORE_CASE), "")
+            ?.trim()
+        if (title.isNullOrBlank() || href.isBlank()) return null
 
-        val doc = app.get(request.data).document
-        val items = doc.select("article.kartu").mapNotNull { parseCard(it) }
+        val poster = card.selectFirst("span.tren-gbr img")?.attr("src")?.ifBlank { null }
+        return newMovieSearchResponse(title, fixUrl(href), TvType.Movie) {
+            this.posterUrl = poster
+        }
+    }
+
+    override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
+        // Beranda tidak punya paginasi; query marker diabaikan situs.
+        if (page > 1) return newHomePageResponse(request.name, emptyList())
+
+        val doc = app.get(mainUrl).document
+        val block = doc.select("section.blok").firstOrNull { section ->
+            section.selectFirst("h1.judul-blok, h2.judul-blok")?.ownText()?.trim() == request.name
+        } ?: return newHomePageResponse(request.name, emptyList())
+
+        val items = if (request.name == "Trending Now") {
+            block.select("a.tren-kartu").mapNotNull { parseTrendingCard(it) }
+        } else {
+            block.select("article.kartu").mapNotNull { parseCard(it) }
+        }
 
         val playable = getPlayableSlugs()
         // Sembunyikan judul yang belum punya pemutar agar tidak berakhir "0 link".
