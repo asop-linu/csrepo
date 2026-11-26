@@ -5,12 +5,11 @@ import com.lagradost.cloudstream3.LoadResponse.Companion.addAniListId
 import com.lagradost.cloudstream3.LoadResponse.Companion.addMalId
 import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
-import com.lagradost.cloudstream3.utils.ExtractorLinkType
 import com.lagradost.cloudstream3.utils.M3u8Helper
-import com.lagradost.cloudstream3.utils.newExtractorLink
 import com.lagradost.cloudstream3.utils.loadExtractor
-import com.lagradost.cloudstream3.utils.Qualities
+import org.json.JSONObject
 import org.jsoup.nodes.Document
+import java.net.URLEncoder
 
 class Donghub : MainAPI() {
     override var mainUrl = "https://donghive.vip"
@@ -27,7 +26,7 @@ class Donghub : MainAPI() {
 
     override val mainPage = mainPageOf(
         "$mainUrl/" to "Popular Today",
-        "$mainUrl/" to "Latest Release",
+        "$mainUrl/anime/" to "Series",
     )
 
     private fun parseItems(doc: Document, selector: String): List<SearchResponse> {
@@ -60,21 +59,27 @@ class Donghub : MainAPI() {
     }
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
-        if (request.name == "Popular Today") {
-            val doc = app.get(mainUrl, headers = defaultHeaders).document
-            val items = parseItems(doc, ".listupd.popularslider article.bs")
-            return newHomePageResponse(request.name, items)
+        val isSeries = request.data.contains("/anime/")
+        val selector = when {
+            isSeries -> "div.listupd article.bs"
+            page == 1 -> ".listupd.popularslider article.bs, .listupd.normal article.bs"
+            else -> ".listupd.normal article.bs"
         }
-
-        val url = if (page > 1) "$mainUrl/page/$page/" else mainUrl
+        val base = request.data.trimEnd('/')
+        val url = if (page > 1) "$base/page/$page/" else "$base/"
         val doc = app.get(url, headers = defaultHeaders).document
-        val items = parseItems(doc, ".listupd.normal article.bs")
-        return newHomePageResponse(request.name, items)
+        return newHomePageResponse(request.name, parseItems(doc, selector))
     }
 
     override suspend fun search(query: String): List<SearchResponse> {
-        val doc = app.get("$mainUrl/?s=$query", headers = defaultHeaders).document
+        val q = URLEncoder.encode(query.trim(), "UTF-8")
+        val doc = app.get("$mainUrl/?s=$q", headers = defaultHeaders).document
         return parseItems(doc, "div.listupd article.bs")
+    }
+
+    /** Halaman film memakai slug biasa; episode selalu punya penanda -episode-. */
+    private fun isEpisodeUrl(url: String): Boolean {
+        return url.contains("-episode-", ignoreCase = true)
     }
 
     private fun episodeToSeriesUrl(url: String): String? {
@@ -127,6 +132,7 @@ class Donghub : MainAPI() {
                 if (posts.isEmpty()) break
                 posts.forEach { post ->
                     val epHref = post["link"]?.toString() ?: return@forEach
+                    if (!isEpisodeUrl(epHref)) return@forEach
                     val titleObj = post["title"] as? Map<*, *>
                     val epTitle = titleObj?.get("rendered")?.toString()?.ifBlank { null } ?: return@forEach
                     val epNum = Regex("""(?:Episode|Ep|E)\s*(\d+)""", RegexOption.IGNORE_CASE).find(epTitle)?.groupValues?.getOrNull(1)?.toIntOrNull()
@@ -144,6 +150,7 @@ class Donghub : MainAPI() {
         if (episodes.isEmpty()) {
             doc.select(".eplister ul li a").forEach { a ->
                 val epHref = a.attr("href").ifBlank { return@forEach }
+                if (!isEpisodeUrl(epHref)) return@forEach
                 val epTitle = a.selectFirst(".epl-title")?.text()?.trim() ?: a.text().trim()
                 val epNum = a.selectFirst(".epl-num")?.text()?.toIntOrNull()
                     ?: Regex("""(?:Episode|Ep|E)\s*(\d+)""", RegexOption.IGNORE_CASE).find(epTitle)?.groupValues?.getOrNull(1)?.toIntOrNull()
@@ -180,7 +187,7 @@ class Donghub : MainAPI() {
             }
         }
 
-        if (episodes.isNotEmpty()) {
+        if (episodes.size > 1 || isEpisodeUrl(animeUrl)) {
             return newAnimeLoadResponse(title, animeUrl, TvType.Anime) {
                 this.engName = title
                 this.posterUrl = poster
@@ -194,7 +201,8 @@ class Donghub : MainAPI() {
             }
         }
 
-        return newMovieLoadResponse(title, animeUrl, TvType.Anime, animeUrl) {
+        val movieData = episodes.firstOrNull()?.data ?: animeUrl
+        return newMovieLoadResponse(title, animeUrl, TvType.AnimeMovie, movieData) {
             this.posterUrl = poster
             this.posterHeaders = defaultHeaders
             this.plot = synopsis
@@ -202,41 +210,43 @@ class Donghub : MainAPI() {
         }
     }
 
+    private val dmHeaders = mapOf(
+        "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Origin" to "https://geo.dailymotion.com",
+        "Referer" to "https://geo.dailymotion.com/",
+        "Range" to "bytes=0-"
+    )
+
+    /** Metadata Dailymotion memakai slash escapes; parse JSON agar URL bersih. */
     private suspend fun extractDailymotion(
         videoId: String,
         callback: (ExtractorLink) -> Unit
-    ) {
+    ): Boolean {
         try {
-            val apiUrl = "https://www.dailymotion.com/player/metadata/video/$videoId"
             val metaText = app.get(
-                apiUrl,
-                headers = mapOf(
-                    "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                    "Referer" to "https://geo.dailymotion.com/"
-                )
+                "https://www.dailymotion.com/player/metadata/video/$videoId",
+                headers = dmHeaders
             ).text
+            val m3u8Url = JSONObject(metaText)
+                .optJSONObject("qualities")
+                ?.optJSONArray("auto")
+                ?.optJSONObject(0)
+                ?.optString("url")
+                ?.takeIf { it.startsWith("http") }
+                ?: return false
 
-            val m3u8Url = Regex(""""type":\s*"application/x-mpegURL",\s*"url":\s*"([^"]+)"""").find(metaText)?.groupValues?.getOrNull(1)
-                ?: Regex(""""url":\s*"([^"]+\.m3u8[^"]*)"""").find(metaText)?.groupValues?.getOrNull(1)
-                ?: return
-
+            // CDN Dailymotion menolak manifest bila Origin/Range tidak ikut.
             val links = M3u8Helper.generateM3u8(
                 source = "Dailymotion",
                 streamUrl = m3u8Url,
-                referer = "https://www.dailymotion.com/",
-                headers = mapOf("Referer" to "https://www.dailymotion.com/")
+                referer = "https://geo.dailymotion.com/",
+                headers = dmHeaders
             )
-            if (links.isNotEmpty()) {
-                links.forEach { callback(it) }
-            } else {
-                callback(
-                    newExtractorLink("Dailymotion", "Dailymotion", m3u8Url) {
-                        this.referer = "https://www.dailymotion.com/"
-                        this.type = ExtractorLinkType.M3U8
-                    }
-                )
-            }
-        } catch (_: Exception) { }
+            links.forEach(callback)
+            return links.isNotEmpty()
+        } catch (_: Exception) {
+            return false
+        }
     }
 
     override suspend fun loadLinks(
@@ -247,17 +257,18 @@ class Donghub : MainAPI() {
     ): Boolean {
         val doc = app.get(data, headers = defaultHeaders).document
         val seenDm = mutableSetOf<String>()
+        var found = false
 
         suspend fun handleUrl(url: String) {
             val dmId = Regex("""(?:dailymotion\.com/(?:video/|player/[^?]+\.html\?video=)|dai\.ly/|geo\.dailymotion\.com/player/[^?]+\.html\?video=)([a-zA-Z0-9]+)""").find(url)?.groupValues?.getOrNull(1)
             if (dmId != null) {
-                if (seenDm.add(dmId)) {
-                    extractDailymotion(dmId, callback)
-                }
+                if (seenDm.add(dmId) && extractDailymotion(dmId, callback)) found = true
                 return
             }
 
-            loadExtractor(url, data, subtitleCallback, callback)
+            try {
+                if (loadExtractor(url, data, subtitleCallback, callback)) found = true
+            } catch (_: Exception) { }
         }
 
         doc.select("#pembed iframe[src]").forEach { iframe ->
@@ -277,6 +288,6 @@ class Donghub : MainAPI() {
             } catch (_: Exception) { }
         }
 
-        return true
+        return found
     }
 }
