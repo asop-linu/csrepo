@@ -19,12 +19,13 @@ import org.jsoup.nodes.Element
  * Struktur situs:
  *  - Kartu film: <article class="kartu"> a.judul (judul+href), .poster img (TMDB poster),
  *    .nilai (skor "5,7" koma desimal), .kartu-kaki (tahun · negara)
- *  - Daftar: /film/ (paginasi /film/2/), /bioskop/ (paginasi /bioskop/2/)
+ *  - Daftar: /terbaru/, /bioskop/, /populer/, /rating-tertinggi/ (tanpa paginasi)
  *  - Detail: /film/<tmdb>-<slug>/ ; Nonton: /nonton/<tmdb>-<slug>/ (iframe player abyss/freeon)
  *
  * Catatan penting: situs ini hanya menyediakan pemutar untuk sebagian judul (rilis baru).
- * Daftar judul yang punya pemutar ada di sitemap /sitemap-nonton.xml, jadi katalog
- * diprioritaskan ke judul tersebut supaya pengguna tidak berakhir di "0 link".
+ * Daftar judul yang punya pemutar ada di sitemap /sitemap-nonton.xml, jadi judul tanpa
+ * pemutar disembunyikan dari daftar maupun pencarian supaya tidak berakhir "0 link".
+ * Blok daftar di beranda: /terbaru/, /bioskop/, /populer/, /rating-tertinggi/.
  */
 class Rebahin : MainAPI() {
     override var mainUrl = "https://rebahin.cam"
@@ -34,9 +35,12 @@ class Rebahin : MainAPI() {
     override val hasDownloadSupport = true
     override val supportedTypes = setOf(TvType.Movie)
 
+    // Mengikuti blok daftar di halaman depan rebahin.cam.
     override val mainPage = mainPageOf(
-        "$mainUrl/film/" to "Film Terbaru",
-        "$mainUrl/bioskop/" to "Bioskop",
+        "$mainUrl/terbaru/" to "Terbaru",
+        "$mainUrl/bioskop/" to "Sedang Tayang di Bioskop",
+        "$mainUrl/populer/" to "Trending Now",
+        "$mainUrl/rating-tertinggi/" to "Rating Tertinggi",
     )
 
     private var playableSlugs: Set<String> = emptySet()
@@ -97,14 +101,17 @@ class Rebahin : MainAPI() {
     }
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
-        val url = if (page <= 1) request.data else "${request.data}$page/"
-        val doc = app.get(url).document
+        // Daftar di beranda tidak punya paginasi: halaman 2+ mengulang isi yang sama.
+        if (page > 1) return newHomePageResponse(request.name, listOf<SearchResponse>())
+
+        val doc = app.get(request.data).document
         val items = doc.select("article.kartu").mapNotNull { parseCard(it) }
 
         val playable = getPlayableSlugs()
+        // Sembunyikan judul yang belum punya pemutar agar tidak berakhir "0 link".
         val filtered = if (playable.isEmpty()) items else items.filter { playable.contains(slugOf(it.url)) }
 
-        return newHomePageResponse(request.name, filtered.ifEmpty { items })
+        return newHomePageResponse(request.name, filtered)
     }
 
     override suspend fun search(query: String): List<SearchResponse> {
@@ -112,10 +119,9 @@ class Rebahin : MainAPI() {
         val doc = app.get("$mainUrl/?s=$encoded").document
         val items = doc.select("article.kartu").mapNotNull { parseCard(it) }
 
-        // Judul yang punya pemutar ditaruh di depan, sisanya tetap ditampilkan.
         val playable = getPlayableSlugs()
         if (playable.isEmpty()) return items
-        return items.sortedByDescending { if (playable.contains(slugOf(it.url))) 1 else 0 }
+        return items.filter { playable.contains(slugOf(it.url)) }
     }
 
     override suspend fun load(url: String): LoadResponse {
