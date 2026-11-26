@@ -1,0 +1,8 @@
+{
+  "name": "MiraCsX",
+  "description": "CloudStream 3 Extensions untuk Situs Streaming Indonesia",
+  "manifestVersion": 1,
+  "pluginLists": [
+    "https://raw.githubusercontent.com/asop-linu/csrepo/builds/plugins.json"
+  ]
+}

@@ -1,0 +1,490 @@
+[
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=https://anichin.moe&sz=%size%",
+        "fileHash": "sha256-3c1b97030109e6ce361e94fd73ad1a056dc9ebb7d7e91668f9ccc2e157cb051e",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/asop-linu/csrepo",
+        "fileSize": 34121,
+        "status": 1,
+        "language": "id",
+        "authors": [
+            "asop-linu"
+        ],
+        "tvTypes": [
+            "Anime",
+            "AnimeMovie"
+        ],
+        "version": 3,
+        "internalName": "Anichin",
+        "url": "https://raw.githubusercontent.com/asop-linu/csrepo/builds/Anichin.cs3",
+        "name": "Anichin"
+    },
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=https://anime-indo.lol&sz=%size%",
+        "fileHash": "sha256-895721489db7c7e148be474e0b8c074b4f1f6d021582a7e74f9b4de51c5738ff",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/asop-linu/csrepo",
+        "fileSize": 23108,
+        "status": 1,
+        "language": "id",
+        "authors": [
+            "asop-linu"
+        ],
+        "tvTypes": [
+            "AnimeMovie",
+            "OVA",
+            "Anime",
+            "Movie"
+        ],
+        "version": 2,
+        "internalName": "AnimeIndo",
+        "url": "https://raw.githubusercontent.com/asop-linu/csrepo/builds/AnimeIndo.cs3",
+        "name": "AnimeIndo"
+    },
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=https://arrowtv.net&sz=%size%",
+        "fileHash": "sha256-a1e50eaeacc7e17c1245c754ee12ce9c4b1a0c11e85fad6910db5c162cc3e7f6",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/asop-linu/csrepo",
+        "fileSize": 20284,
+        "status": 1,
+        "language": "en",
+        "authors": [
+            "asop-linu"
+        ],
+        "tvTypes": [
+            "Movie",
+            "TvSeries",
+            "Anime"
+        ],
+        "version": 1,
+        "internalName": "ArrowTV",
+        "url": "https://raw.githubusercontent.com/asop-linu/csrepo/builds/ArrowTV.cs3",
+        "name": "ArrowTV"
+    },
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=https://blurayufr.site&sz=%size%",
+        "fileHash": "sha256-7dfb532eaec5cd7ee0ad6d41292c55587a1724aa24ab1031c5312c886a536cf6",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/asop-linu/csrepo",
+        "fileSize": 27993,
+        "status": 1,
+        "language": "id",
+        "authors": [
+            "asop-linu"
+        ],
+        "tvTypes": [
+            "Movie",
+            "TvSeries"
+        ],
+        "version": 1,
+        "internalName": "BlurayUFR",
+        "url": "https://raw.githubusercontent.com/asop-linu/csrepo/builds/BlurayUFR.cs3",
+        "name": "BlurayUFR"
+    },
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=https://ca3d.site&sz=%size%",
+        "fileHash": "sha256-7cb5028e3581186b3bfb89eb9244a0442331bf45dcc6c3c57fca2fa8b89ef148",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/asop-linu/csrepo",
+        "fileSize": 18610,
+        "status": 1,
+        "language": "id",
+        "authors": [
+            "asop-linu"
+        ],
+        "tvTypes": [
+            "Anime",
+            "AnimeMovie"
+        ],
+        "version": 1,
+        "internalName": "CA3D",
+        "url": "https://raw.githubusercontent.com/asop-linu/csrepo/builds/CA3D.cs3",
+        "name": "CA3D"
+    },
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=https://donghive.vip&sz=%size%",
+        "fileHash": "sha256-2a82cf2eacc11cdad8c12872ab7f7a5f48fc26dc2e64d9b38a46763a01a522fe",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/asop-linu/csrepo",
+        "fileSize": 26025,
+        "status": 1,
+        "language": "id",
+        "authors": [
+            "asop-linu"
+        ],
+        "tvTypes": [
+            "Anime",
+            "AnimeMovie"
+        ],
+        "version": 4,
+        "internalName": "Donghub",
+        "url": "https://raw.githubusercontent.com/asop-linu/csrepo/builds/Donghub.cs3",
+        "name": "Donghub"
+    },
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=https://z3.idlixku.com&sz=%size%",
+        "fileHash": "sha256-42f26f6030631cc3d02cedde26c7f6e163084aa15e322d66412fa036e4e09924",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/asop-linu/csrepo",
+        "fileSize": 65505,
+        "status": 1,
+        "language": "id",
+        "authors": [
+            "asop-linu"
+        ],
+        "tvTypes": [
+            "Movie",
+            "TvSeries"
+        ],
+        "version": 4,
+        "internalName": "Idlix",
+        "url": "https://raw.githubusercontent.com/asop-linu/csrepo/builds/Idlix.cs3",
+        "name": "Idlix"
+    },
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=klikxxi.shop&sz=%size%",
+        "fileHash": "sha256-ed53bff2d65645b81f7faecb3037ba90139915b076ef43be2fa705477d7fc700",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/asop-linu/csrepo",
+        "fileSize": 24670,
+        "status": 1,
+        "language": "id",
+        "authors": [
+            "asop-linu"
+        ],
+        "tvTypes": [
+            "Movie"
+        ],
+        "version": 1,
+        "internalName": "KlikXXI",
+        "url": "https://raw.githubusercontent.com/asop-linu/csrepo/builds/KlikXXI.cs3",
+        "name": "KlikXXI"
+    },
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=https://kuramanime.ink&sz=%size%",
+        "fileHash": "sha256-023b82f85ae8202cd03d45d00c8f5097295adf13e51e53bc27f2fdc71c511654",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/asop-linu/csrepo",
+        "fileSize": 24976,
+        "status": 1,
+        "language": "id",
+        "authors": [
+            "asop-linu"
+        ],
+        "tvTypes": [
+            "AnimeMovie",
+            "OVA",
+            "Anime"
+        ],
+        "version": 6,
+        "internalName": "Kuramanime",
+        "url": "https://raw.githubusercontent.com/asop-linu/csrepo/builds/Kuramanime.cs3",
+        "name": "Kuramanime"
+    },
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=https://kuronime.sbs&sz=%size%",
+        "fileHash": "sha256-4a61f42e3a7d419076912c015047739f44aafeaee6036b852b1c87f075c97f43",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/asop-linu/csrepo",
+        "fileSize": 25664,
+        "status": 1,
+        "language": "id",
+        "authors": [
+            "asop-linu"
+        ],
+        "tvTypes": [
+            "AnimeMovie",
+            "OVA",
+            "Anime"
+        ],
+        "version": 3,
+        "internalName": "Kuronime",
+        "url": "https://raw.githubusercontent.com/asop-linu/csrepo/builds/Kuronime.cs3",
+        "name": "Kuronime"
+    },
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=https://server-1.layar.asia&sz=%size%",
+        "fileHash": "sha256-7f1727d3deb3bca210f60853b4c7bd30882bbd6cb8283b604c2254c07f978880",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/asop-linu/csrepo",
+        "fileSize": 40163,
+        "status": 1,
+        "language": "id",
+        "authors": [
+            "asop-linu"
+        ],
+        "tvTypes": [
+            "Movie",
+            "TvSeries",
+            "AsianDrama"
+        ],
+        "version": 2,
+        "internalName": "LayarAsia",
+        "url": "https://raw.githubusercontent.com/asop-linu/csrepo/builds/LayarAsia.cs3",
+        "name": "LayarAsia"
+    },
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=https://lk21.de&sz=%size%",
+        "fileHash": "sha256-c9eecf2e8572809faf4ce6729454ee178f70944b1b0e5ae4f13f65256a58a860",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/asop-linu/csrepo",
+        "fileSize": 37914,
+        "status": 1,
+        "language": "id",
+        "authors": [
+            "asop-linu"
+        ],
+        "tvTypes": [
+            "TvSeries",
+            "Movie"
+        ],
+        "version": 10,
+        "internalName": "LK21",
+        "url": "https://raw.githubusercontent.com/asop-linu/csrepo/builds/LK21.cs3",
+        "name": "LK21"
+    },
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=https://themoviebox.org&sz=%size%",
+        "fileHash": "sha256-4a90ea3962d7dea254c117237f9c12ffa64c1123281e2b8568eaf1eea9221b67",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/asop-linu/csrepo",
+        "fileSize": 37320,
+        "status": 1,
+        "language": "id",
+        "authors": [
+            "asop-linu"
+        ],
+        "tvTypes": [
+            "Anime",
+            "Movie",
+            "TvSeries"
+        ],
+        "version": 4,
+        "internalName": "MovieBox",
+        "url": "https://raw.githubusercontent.com/asop-linu/csrepo/builds/MovieBox.cs3",
+        "name": "MovieBox"
+    },
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=new39.ngefilm.site&sz=%size%",
+        "fileHash": "sha256-891da3290c05d417ea44714622315388bf4106716f117c3bae8bd2d1eb2070c9",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/asop-linu/csrepo",
+        "fileSize": 27308,
+        "status": 1,
+        "language": "id",
+        "authors": [
+            "asop-linu"
+        ],
+        "tvTypes": [
+            "Movie"
+        ],
+        "version": 1,
+        "internalName": "NGEFILM21",
+        "url": "https://raw.githubusercontent.com/asop-linu/csrepo/builds/NGEFILM21.cs3",
+        "name": "NGEFILM21"
+    },
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=https://nimegami.id&sz=%size%",
+        "fileHash": "sha256-06b72d30b027c99cc9ae2df25b633dc8924d0f75cb2ce5da4d9491b3c342508b",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/asop-linu/csrepo",
+        "fileSize": 23280,
+        "status": 1,
+        "language": "id",
+        "authors": [
+            "asop-linu"
+        ],
+        "tvTypes": [
+            "AnimeMovie",
+            "OVA",
+            "Anime"
+        ],
+        "version": 3,
+        "internalName": "Nimegami",
+        "url": "https://raw.githubusercontent.com/asop-linu/csrepo/builds/Nimegami.cs3",
+        "name": "Nimegami"
+    },
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=https://oploverz.mov&sz=%size%",
+        "fileHash": "sha256-6208f615ba2f73337ffbbdc0b348c7ed94f41eb9e412c64d0a04973450038ada",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/asop-linu/csrepo",
+        "fileSize": 29927,
+        "status": 1,
+        "language": "id",
+        "authors": [
+            "asop-linu"
+        ],
+        "tvTypes": [
+            "AnimeMovie",
+            "OVA",
+            "Anime"
+        ],
+        "version": 4,
+        "internalName": "Oploverz",
+        "url": "https://raw.githubusercontent.com/asop-linu/csrepo/builds/Oploverz.cs3",
+        "name": "Oploverz"
+    },
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=https://otakudesu.blog&sz=%size%",
+        "fileHash": "sha256-eb5519243324e2407c2bbba4140e88f2525b793d128fa3578e33ad115fe170aa",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/asop-linu/csrepo",
+        "fileSize": 29021,
+        "status": 1,
+        "language": "id",
+        "authors": [
+            "asop-linu"
+        ],
+        "tvTypes": [
+            "AnimeMovie",
+            "OVA",
+            "Anime"
+        ],
+        "version": 1,
+        "internalName": "Otakudesu",
+        "url": "https://raw.githubusercontent.com/asop-linu/csrepo/builds/Otakudesu.cs3",
+        "name": "Otakudesu"
+    },
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=https://new1.pusatfilm21info.com&sz=%size%",
+        "fileHash": "sha256-b7ae34617859ee479b158293be6e54331582f94797485f4970a34af771088905",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/asop-linu/csrepo",
+        "fileSize": 26553,
+        "status": 1,
+        "language": "id",
+        "authors": [
+            "asop-linu"
+        ],
+        "tvTypes": [
+            "Movie",
+            "TvSeries"
+        ],
+        "version": 1,
+        "internalName": "PusatFilm",
+        "url": "https://raw.githubusercontent.com/asop-linu/csrepo/builds/PusatFilm.cs3",
+        "name": "PusatFilm"
+    },
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=http://159.89.250.250&sz=%size%",
+        "fileHash": "sha256-4285152de600fca4dc0d5e93373ef6fa6bfcc189937bcb91a7b0f292592b7e92",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/asop-linu/csrepo",
+        "fileSize": 20705,
+        "status": 1,
+        "language": "id",
+        "authors": [
+            "asop-linu"
+        ],
+        "tvTypes": [
+            "Movie",
+            "TvSeries"
+        ],
+        "version": 3,
+        "internalName": "Rebahin",
+        "url": "https://raw.githubusercontent.com/asop-linu/csrepo/builds/Rebahin.cs3",
+        "name": "Rebahin"
+    },
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=sarangfilm.co&sz=%size%",
+        "fileHash": "sha256-48012f2f5c2cbcdbfd669bf34a5e70029f1e71ae5224e7826bc6dd2cc703e8db",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/asop-linu/csrepo",
+        "fileSize": 24685,
+        "status": 1,
+        "language": "id",
+        "authors": [
+            "asop-linu"
+        ],
+        "tvTypes": [
+            "Movie"
+        ],
+        "version": 1,
+        "internalName": "Sarangfilm",
+        "url": "https://raw.githubusercontent.com/asop-linu/csrepo/builds/Sarangfilm.cs3",
+        "name": "Sarangfilm"
+    },
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=https://sflix.film&sz=%size%",
+        "fileHash": "sha256-8658fabe359af2b9f9035cdf17fe5101c06907cdc77a598b3228e9d93601b8f6",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/asop-linu/csrepo",
+        "fileSize": 36297,
+        "status": 1,
+        "language": "id",
+        "authors": [
+            "asop-linu"
+        ],
+        "tvTypes": [
+            "Anime",
+            "Movie",
+            "TvSeries"
+        ],
+        "version": 1,
+        "internalName": "Sflix",
+        "url": "https://raw.githubusercontent.com/asop-linu/csrepo/builds/Sflix.cs3",
+        "name": "Sflix"
+    },
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=https://x6.sokuja.uk&sz=%size%",
+        "fileHash": "sha256-61b025aed7446405d8dd06edfbc88a3b949f93f095735f2b7b4c03df878af813",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/asop-linu/csrepo",
+        "fileSize": 25242,
+        "status": 1,
+        "language": "id",
+        "authors": [
+            "asop-linu"
+        ],
+        "tvTypes": [
+            "AnimeMovie",
+            "OVA",
+            "Anime"
+        ],
+        "version": 4,
+        "internalName": "Sokuja",
+        "url": "https://raw.githubusercontent.com/asop-linu/csrepo/builds/Sokuja.cs3",
+        "name": "Sokuja"
+    },
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=rotator.wgfilm21.net&sz=%size%",
+        "fileHash": "sha256-276dacc7e2e543f1145888275e5414f49b6adc3d3d49c35a30daf2f164cbee79",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/asop-linu/csrepo",
+        "fileSize": 24737,
+        "status": 1,
+        "language": "id",
+        "authors": [
+            "asop-linu"
+        ],
+        "tvTypes": [
+            "Movie"
+        ],
+        "version": 1,
+        "internalName": "WGFilm21",
+        "url": "https://raw.githubusercontent.com/asop-linu/csrepo/builds/WGFilm21.cs3",
+        "name": "WGFilm21"
+    },
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=https://yunshanid.site&sz=%size%",
+        "fileHash": "sha256-db7bfaddad4f57363337f3c63a86f2b03a00af990a2728ce73c568de21a53bde",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/asop-linu/csrepo",
+        "fileSize": 23613,
+        "status": 1,
+        "language": "id",
+        "authors": [
+            "asop-linu"
+        ],
+        "tvTypes": [
+            "Anime",
+            "AnimeMovie"
+        ],
+        "version": 2,
+        "internalName": "YunshanID",
+        "url": "https://raw.githubusercontent.com/asop-linu/csrepo/builds/YunshanID.cs3",
+        "name": "YunshanID"
+    }
+]
