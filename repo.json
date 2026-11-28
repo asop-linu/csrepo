@@ -1,0 +1,8 @@
+{
+  "name": "MiraCsX Dev",
+  "description": "MiraCsX CloudStream dev build",
+  "manifestVersion": 1,
+  "pluginLists": [
+    "https://raw.githubusercontent.com/asop-linu/csrepo/builds-dev/plugins.json"
+  ]
+}
